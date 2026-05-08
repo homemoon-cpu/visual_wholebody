@@ -10,24 +10,26 @@ class B2PiperRoughCfg(LeggedRobotCfg):
         num_commands = 3
         traj_time = [1, 3]
         hold_time = [0.5, 2]
-        collision_upper_limits = [0.1, 0.2, -0.05]
-        collision_lower_limits = [-0.8, -0.2, -0.7]
+        collision_upper_limits = [0.1, 0.15, -0.05]
+        collision_lower_limits = [-0.6, -0.15, -0.55]
         underground_limit = -0.7
         num_collision_check_samples = 10
         command_mode = 'sphere'
         arm_induced_pitch = 0.38
 
         class sphere_center:
-            x_offset = 0.3  # Relative to base
+            x_offset = 0.2  # Relative to base (arm_base at x=0.2)
             y_offset = 0  # Relative to base
-            z_invariant_offset = 0.7  # Relative to terrain
+            z_invariant_offset = 0.68  # Relative to terrain (B2 standing 0.58 + arm_base z=0.1)
 
         class ranges:
-            init_pos_start = [0.5, np.pi / 8, 0]
-            init_pos_end = [0.7, 0, 0]
-            pos_l = [0.4, 0.95]
+            # Piper arm reach ~0.63m (link2=0.285 + link3=0.251 + link4-6+gripper≈0.091)
+            # sphere_center距arm_base约0~0.1m, 所以pos_l上限≈0.55保守安全
+            init_pos_start = [0.35, np.pi / 8, 0]
+            init_pos_end = [0.5, 0, 0]
+            pos_l = [0.25, 0.55]
             pos_p = [-1 * np.pi / 2.5, 1 * np.pi / 3]
-            pos_y = [-1.2, 1.2]
+            pos_y = [-1.0, 1.0]
 
             delta_orn_r = [-0.5, 0.5]
             delta_orn_p = [-0.5, 0.5]
@@ -167,7 +169,7 @@ class B2PiperRoughCfg(LeggedRobotCfg):
         box_env_origins_z = box_size / 2 + 0.16
 
     class arm:
-        init_target_ee_base = [0.2, 0.0, 0.2]
+        init_target_ee_base = [0.15, 0.0, 0.15]  # EE initial target relative to base (Piper shorter than Z1)
         grasp_offset = 0.08
         osc_kp = np.array([100, 100, 100, 30, 30, 30])
         osc_kd = 2 * (osc_kp ** 0.5)
