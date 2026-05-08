@@ -47,6 +47,71 @@ from .b1z1_config import B1Z1RoughCfg
 
 import sys
 
+@torch.jit.script
+def euler_from_quat(q):
+    # type: (Tensor) -> Tuple[Tensor, Tensor, Tensor]
+    """
+    Convert quaternion (x, y, z, w) to roll, pitch, yaw.
+    """
+    qx = q[:, 0]
+    qy = q[:, 1]
+    qz = q[:, 2]
+    qw = q[:, 3]
+
+    # roll (x-axis rotation)
+    sinr_cosp = 2.0 * (qw * qx + qy * qz)
+    cosr_cosp = qw * qw - qx * qx - qy * qy + qz * qz
+    roll = torch.atan2(sinr_cosp, cosr_cosp)
+
+    # pitch (y-axis rotation)
+    sinp = 2.0 * (qw * qy - qz * qx)
+    pitch = torch.where(torch.abs(sinp) >= 1.0, copysign(np.pi / 2.0, sinp), torch.asin(sinp))
+
+    # yaw (z-axis rotation)
+    siny_cosp = 2.0 * (qw * qz + qx * qy)
+    cosy_cosp = qw * qw + qx * qx - qy * qy - qz * qz
+    yaw = torch.atan2(siny_cosp, cosy_cosp)
+
+    return roll, pitch, yaw
+
+@torch.jit.script
+def sphere2cart(sphere_coords):
+    # type: (Tensor) -> Tensor
+    """
+    将球面坐标 [length, pitch, yaw] 转换为笛卡尔坐标 [x, y, z]。
+    这里假设 pitch 是相对于 XY 平面的仰角。
+    """
+    l = sphere_coords[..., 0]
+    p = sphere_coords[..., 1]
+    y = sphere_coords[..., 2]
+
+    x = l * torch.cos(p) * torch.cos(y)
+    y_cart = l * torch.cos(p) * torch.sin(y)
+    z = l * torch.sin(p)
+
+    return torch.stack([x, y_cart, z], dim=-1)
+
+@torch.jit.script
+def cart2sphere(cart_coords):
+    # type: (Tensor) -> Tensor
+    """
+    将笛卡尔坐标 [x, y, z] 转换为球面坐标 [length, pitch, yaw]。
+    """
+    x = cart_coords[..., 0]
+    y = cart_coords[..., 1]
+    z = cart_coords[..., 2]
+
+    # 计算长度 (半径)
+    l = torch.sqrt(x**2 + y**2 + z**2)
+    
+    # 计算俯仰角 pitch (使用 atan2 避免 asin 的值域和除以零问题)
+    p = torch.atan2(z, torch.sqrt(x**2 + y**2))
+    
+    # 计算偏航角 yaw
+    yaw = torch.atan2(y, x)
+
+    return torch.stack([l, p, yaw], dim=-1)
+
 class ManipLoco(LeggedRobot):
     name = None
     cfg: B1Z1RoughCfg
