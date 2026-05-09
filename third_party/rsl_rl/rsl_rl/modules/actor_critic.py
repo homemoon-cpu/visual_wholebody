@@ -121,9 +121,9 @@ class ActorCritic(nn.Module):
                 num_leg_actions, num_arm_actions, adaptive_arm_gains, adaptive_arm_gains_scale,
                 num_priv, num_hist, num_prop, priv_encoder_dims, output_tanh=False):
                 super().__init__()
-                self.adaptive_arm_gains = adaptive_arm_gains
-                self.adaptive_arm_gains_scale = adaptive_arm_gains_scale
-                self.num_arm_actions = num_arm_actions
+                self.adaptive_arm_gains: bool = adaptive_arm_gains
+                self.adaptive_arm_gains_scale: float = float(adaptive_arm_gains_scale)
+                self.num_arm_actions: int = num_arm_actions
 
                 # Policy
                 if len(priv_encoder_dims) > 0:
@@ -143,9 +143,9 @@ class ActorCritic(nn.Module):
                     self.priv_encoder = nn.Identity()
                     priv_encoder_output_dim = num_priv
 
-                self.num_priv = num_priv
-                self.num_hist = num_hist
-                self.num_prop = num_prop
+                self.num_priv: int = num_priv
+                self.num_hist: int = num_hist
+                self.num_prop: int = num_prop
 
                 # Priv Encoder
                 # encoder_dim = 8
@@ -203,7 +203,7 @@ class ActorCritic(nn.Module):
                         actor_arm_layers.append(activation)
                 self.actor_arm_control_head = nn.Sequential(*actor_arm_layers)
             
-            def forward(self, obs, hist_encoding=False):
+            def forward(self, obs: torch.Tensor, hist_encoding: bool = False) -> torch.Tensor:
                 obs_prop = obs[:, :self.num_prop]
                 if hist_encoding:
                     latent = self.infer_hist_latent(obs)
@@ -218,11 +218,11 @@ class ActorCritic(nn.Module):
                     arm_output = torch.cat([arm_output[:, :self.num_arm_actions // 2], gains], dim=-1)
                 return torch.cat([leg_output, arm_output], dim=-1)
             
-            def infer_priv_latent(self, obs):
+            def infer_priv_latent(self, obs: torch.Tensor) -> torch.Tensor:
                 priv = obs[:, self.num_prop: self.num_prop + self.num_priv]
                 return self.priv_encoder(priv)
-            
-            def infer_hist_latent(self, obs):
+
+            def infer_hist_latent(self, obs: torch.Tensor) -> torch.Tensor:
                 hist = obs[:, -self.num_hist*self.num_prop:]
                 return self.history_encoder(hist.view(-1, self.num_hist, self.num_prop))
             
