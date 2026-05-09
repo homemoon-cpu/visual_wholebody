@@ -28,11 +28,13 @@
 #
 # Copyright (c) 2021 ETH Zurich, Nikita Rudin
 
-from legged_gym import LEGGED_GYM_ROOT_DIR
 import os
-
 import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+from legged_gym import LEGGED_GYM_ROOT_DIR
+
+
 
 import isaacgym
 from legged_gym.envs import *
@@ -146,7 +148,7 @@ def play(args):
             mp4_writer.close()
 
 if __name__ == '__main__':
-    EXPORT_POLICY = False
+    EXPORT_POLICY = True
     SAVE_ACTOR_HIST_ENCODER = False
     RECORD_FRAMES = False
     MOVE_CAMERA = False
